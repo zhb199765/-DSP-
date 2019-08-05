@@ -1,87 +1,90 @@
-# -DSP-
-DSP 车牌识别 新能源车牌
+基于DSP车牌识别系统的使用说明
+一、交叉编译环境配置
+1.安装SDK
+下载TI官方SDK包http://software-dl.ti.com/processor-sdk-linux/esd/AM57X/latest/index_FDS.html
+ 
 
-运行Demo：
+2 下载JN-mini5728补丁包 
+http://www.jiang-niu.com/download.html 
 
-$ ./demo // 进入菜单交互界面
-$ ./demo ? // 查看CLI帮助
+3 Ubuntu PC运行如下命令，安装TI官方SDK包 
+Chmod 0777 ti-processor-sdk-linux-am57xx-evm-05.03.00.07-Linux-x86-Install.bin
+./ti-processor-sdk-linux-am57xx-evm-05.03.00.07-Linux-x86-Install.bin 
+注意：
+安装路径最好选择家目录，即/home/xxx，xxx为Ubuntu PC用户名。
 
-如何开始
-当进入交互界面以后，首先是主目录，下面是主目录各个功能的解释：
+4 Ubuntu PC运行如下命令，安装JN-mini5728补丁包 
+tar zxvf JN-mini5728_patch_4.3.tar.gz 
+cp -r JN-mini5728_patch_4.3/* ~/ti-processor-sdk-linux-am57xx-evm-05.03.00.07 
+sync 
 
-名称  说明
-测试  分别测试车牌识别中每个环节。要想更改测试的图片，可以替换resources/image下的图片；
-批量测试    跑完整个general_test下所有图片，输出准确率等指标，用于评估EasyPR的效果；
-SVM训练   用SVM训练车牌判断模型；
-ANN训练   用ANN训练字符识别和中文识别模型，对应ann.xml和ann_chinese.xml；
-中文训练    1.6版新增，用ANN模型训练灰度中文字符，生成annCh.xml；
-生成字符    需要配合plates_200k这个数据集才能作用；
-当成功运行EasyPR后，首先运行批量测试功能。如果最后的指标跟readme一致，说明EasyPR安装成功。
+5 打开.bashrc文件 
+sudo vim ~/.bashrc 
 
-可以在accuracy.hpp中修改 pr.setResultShow(false) 为 pr.setResultShow(true)， 让批量测试显示出车牌定位的效果。
+6 添加如下命令到文件末尾，然后保存 
+ 
 
-Note:
+7 Ubuntu PC运行如下命令，使PATH环境变量生效 
+source ~/.bashrc 
 
-在批量测试下有一个选项，native_test。可以把自己的图片放到resources/image/native_test下测试用的。如果你自己的图片没有ground_truth，无法计算准确率指标。但是可以打开车牌定位的效果。
+8 Ubuntu PC运行如下命令，测试交叉编译工具链是否安装成功 
+arm-linux-gnueabihf-gcc -v 
+ 
 
-如果想评估车牌定位的指标。需要生成GroundTruth_windows.xml和GroundTruth_others.xml。可以参考general_test下的同名文件来了解下这个文件的格式该如何定义。例如下面的一个xml节点：
+解压系统文件（filesystem）
 
-<taggedRectangle x="170" y="184" width="96" height="27" rotation="-1" locateType="1">蓝牌:京A88731</taggedRectangle>
-taggedRectangle对应一个车牌，属性x和y表示的是车牌外接矩形的中心点的坐标。width和height是宽度和高度。另外两个属性目前没用到。
+9 将程序放置在保存到/home/linux/ti-processor-sdk-linux-rt-am57xx-evm-05.03.00.07/JiangNiu-demo/Qt路径下
 
-GroundTruth_windows.xml的编码需要设置为ANSI，而GroundTruth_others.xml的编码要设置为UTF-8，否则会出现乱码。
+二、程序路径配置
+ 
+1 利用Qt对程序进行编辑与修改
 
-命令行示例
-可以向 demo[.exe] 传递命令行参数来完成你想要的工作，目前Demo支持5个子命令。对于每个子命令的帮助信息可以传入 -h 参数来获取。
+2 修改如图库函数路径，保证与镜像系统文件路径一致
 
-车牌识别
+3 修改makefile文件，添加Makefile.build 
 
-# 利用提供的SVM和ANN模型来识别一张图片里面的所有车牌
+键盘输入Ctrl+Alt+T，弹出命令行终端，在命令行终端输
+入以下命令编译整个helloworld工程 
+cd ~/ti-processor-sdk-linux-rt-am57xx-evm-03.03.00.04/JiangNiu-demo/Qt/EasyPR-master-video
+make -f Makefile.build
+三、导入开发板
+1 开机登陆 
+将USB转TTL模块连接到Ubuntu PC机USB接口，如下图所示：
+ 
+注意串口线的顺序。
 
-$ ./demo recognize -p resources/image/plate_recognize.jpg --svm model/svm.xml --ann model/ann.xml
+2 打开Ubuntu PC，安装minicom，键盘输入Ctrl+Alt+T，弹出命令行终端，在命令行终端输入
+sudo minicom，进入minicom界面
+ 
+如果Ubuntu PC打印错误信息，请重新插拔USB转TTL模块。 
+minicom: cannot open /dev/ttyUSB0: No such file or directory 
+Ubuntu PC安装minicom，请参考匠牛社区文档《Ubuntu 开发环境搭建》
 
-# 或者更简单一些(注意模型路径)
-$ ./demo recognize -p resources/image/plate_recognize.jpg
-SVM训练
+连接电源线minicom显示Linux登录界面
+JN-mini5728 LED显示绿色，表示JN-mini5728启动成功
+ 
+进入Linux登录界面，输入账号root，密码为空，即可完成登录。
 
-新版本的EasyPR大大简化了SVM训练：
+3 利用U盘拷贝含有可执行文件的文件夹Easy PR-master-video
 
-# 首先准备好车牌图片集合plates/
-#    是车牌的放在plates/has/
-#    不是车牌的放在plates/no/
-#    车牌可从项目resources/train/svm.7z中解压得到。
+查看U盘挂载信息 
+root@am57xx-evm:~# df 
+ 
+从3.0 U盘拷贝数据到JN-mini5728家目录 
+root@am57xx-evm:~# cp -r /run/media/sdb1/EasyPR-master-video /home/root
 
-$ ./demo svm --plates=path/to/your/plates --svm=save/to/svm.xml
+卸载U盘root@am57xx-evm:~# umount /run/media/sdb1
 
-# 该命令将70%的车牌作为训练数据，另外30%的车牌作为测试数据，
-# 这个只可在 include/easypr/config.h 修改。
-# 将训练好的模型存放在 save/to/svm.xml。
-首先在easypr的主目录下面新建了一个tmp文件夹，并且把svm.7z解压得到的svm文件夹移动到tmp文件夹下面，
+4 打开根目录下的文件夹，赋予运行权限
 
-执行 $ demo svm --plates=tmp/svm --svm=tmp/svm.xml，生成得到的tmp文件夹下面的svm.xml就是训练好的模型，
+root@am57xx-evm:~# cd /home/root/EasyPR-master-video
 
-替换model/svm.xml就可以达到替换新模型的目的，替换前请先备份原始模型。
+chmod 777 /home/root/EasyPR-master-video
 
-ANN训练
+本程序运用到外置摄像头，鼠标以及HDMI显示器
 
-先准备好字符图片集合，可从项目resources/train/ann.7z中解压得到。
+摄像头以及鼠标需要连接到USB上，HDMI连接到对应接口后重启开发板。
 
-每类字符都存放在以其名称命名的子文件夹中，命名规则请参考 resources/text/province_mapping。
+连接好外设后运行可执行文件即可
 
-一切准备就绪后，运行下面这条命令即可：
-
-$ ./demo ann --chars=path/to/chars --ann=save/to/ann.xml
-首先在easypr的主目录下面新建了一个tmp文件夹，并且把ann.7z解压得到的ann文件夹移动到tmp文件夹下面，
-
-执行 $ demo ann --chars=tmp/ann --ann=tmp/ann.xml，生成得到的tmp文件夹下面的svm.xml就是训练好的模型，
-
-替换model/ann.xml就可以达到替换新模型的目的，替换前请先备份原始模型。
-
-注意
-
-train文件夹下有3个ann压缩包，解释一下：
-
-文件  用途
-ann.7z  包括黑白的字符和中文数据，ann以及ann_chinese.xml由这个训练得到；
-annCh.7z    仅仅包括中文的灰度数据，annCh.xml由这个训练得到；
-annGray.7z  包括了灰度的字符数据，目前没有任何模型由这个训练得到，主要是为未来的CNN做准备
+root@am57xx-evm:~# ./EasyPR-master-video
