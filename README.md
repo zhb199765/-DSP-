@@ -1,5 +1,7 @@
 基于DSP车牌识别系统的使用说明
+
 一、交叉编译环境配置
+
 1.安装SDK
 下载TI官方SDK包http://software-dl.ti.com/processor-sdk-linux/esd/AM57X/latest/index_FDS.html
  
